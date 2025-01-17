@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1">
     <title>Milch Experience</title>
     <style>
         body,
@@ -11,8 +11,8 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: Arial, sans-serif;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         #backgroundVideo {
@@ -49,7 +49,8 @@
             width: 100%;
             height: 100%;
             z-index: 1001;
-            pointer-events: none;
+            cursor: pointer;
+            opacity: 1;
         }
 
         #topLeftImage {
@@ -58,6 +59,7 @@
             left: 10px;
             width: 400px;
             height: auto;
+            opacity: 1;
             z-index: 1000;
         }
 
@@ -79,56 +81,56 @@
             flex: 1;
         }
 
-        /* Mobile Fullscreen Styles */
+        /* Mobile Optimization */
         @media (max-width: 768px) {
             #clickableVideoContainer {
-                display: none; /* Hide small video container on mobile */
+                width: 300px;
+                bottom: 20px;
+                right: 20px;
             }
 
-            #mobileFullscreen {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                display: none; /* Initially hidden */
-                background: black;
-                z-index: 2000;
-            }
-
-            #mobileFullscreen video {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 100%;
+            #clickableVideo {
+                max-width: 100%;
                 height: auto;
-                max-height: 100%;
             }
 
-            #mobileFullscreen img {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                pointer-events: none;
+            #topLeftImage {
+                width: 250px;
+            }
+
+            .audio-controls {
+                padding: 5px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #clickableVideoContainer {
+                width: 150px;
+                bottom: 15px;
+                right: 15px;
+            }
+
+            #topLeftImage {
+                width: 150px;
+            }
+
+            .audio-controls {
+                padding: 4px;
+                font-size: 12px;
             }
         }
     </style>
 </head>
 
 <body>
-    <!-- Desktop Background Video -->
     <video id="backgroundVideo" muted>
         <source src="https://link.storjshare.io/s/jupqhzkurt5ywvgxeco2jjrdhyqq/music/MilchIntro.mp4?download=1" type="video/mp4">
         Your browser does not support the video tag.
     </video>
 
-    <!-- Logo -->
     <img id="topLeftImage" src="https://i.postimg.cc/CM2rmXbX/milch.png" alt="Milch Logo">
 
-    <!-- Desktop Clickable Video -->
     <div id="clickableVideoContainer">
         <video id="clickableVideo" muted>
             <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
@@ -137,59 +139,68 @@
         <img id="frameOverlay" src="https://i.postimg.cc/9MRsCJQ0/image.png" alt="Frame Overlay">
     </div>
 
-    <!-- Mobile Fullscreen Video -->
-    <div id="mobileFullscreen">
-        <video id="mobileVideo" muted>
-            <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <img src="https://i.postimg.cc/9MRsCJQ0/image.png" alt="Frame Overlay">
-    </div>
+    <audio id="audioPlayer">
+        <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1" type="audio/flac">
+        Your browser does not support the audio tag.
+    </audio>
 
-    <!-- Audio Controls -->
     <div class="audio-controls">
         <input id="seekBar" type="range" min="0" max="100" value="0">
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const isMobile = window.matchMedia("(max-width: 768px)").matches;
-            const backgroundVideo = document.getElementById('backgroundVideo');
+            const video = document.getElementById('backgroundVideo');
+            const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
             const clickableVideo = document.getElementById('clickableVideo');
-            const mobileFullscreen = document.getElementById('mobileFullscreen');
-            const mobileVideo = document.getElementById('mobileVideo');
+            const frameOverlay = document.getElementById('frameOverlay');
+            const audio = document.getElementById('audioPlayer');
+            const seekBar = document.getElementById('seekBar');
             let isPlaying = false;
 
-            function toggleMobileFullscreen() {
+            clickableVideo.addEventListener('loadedmetadata', () => {
+                frameOverlay.style.height = `${clickableVideo.offsetHeight}px`;
+                frameOverlay.style.width = `${clickableVideo.offsetWidth}px`;
+            });
+
+            function togglePlayPause() {
                 if (isPlaying) {
-                    mobileFullscreen.style.display = 'none';
-                    backgroundVideo.style.opacity = '1';
+                    video.pause();
+                    audio.pause();
+                    clickableVideo.pause();
+                    clickableVideo.style.opacity = "1";
                 } else {
-                    mobileFullscreen.style.display = 'block';
-                    mobileVideo.play();
-                    backgroundVideo.style.opacity = '0';
+                    video.play();
+                    audio.play();
+                    clickableVideo.play();
+                    clickableVideo.style.opacity = "1";
                 }
                 isPlaying = !isPlaying;
             }
 
-            if (isMobile) {
-                mobileFullscreen.addEventListener('click', () => {
-                    mobileVideo.pause();
-                    mobileFullscreen.style.display = 'none';
-                    backgroundVideo.play();
-                    backgroundVideo.style.opacity = '1';
-                });
+            frameOverlay.addEventListener('click', () => {
+                togglePlayPause();
+            });
 
-                mobileVideo.addEventListener('ended', () => {
-                    mobileFullscreen.style.display = 'none';
-                    backgroundVideo.play();
-                });
-            }
+            video.addEventListener('ended', () => {
+                video.src = loopVideoSource;
+                video.loop = true;
+                video.play();
+            });
 
-            clickableVideo.addEventListener('click', () => {
-                if (isMobile) {
-                    toggleMobileFullscreen();
-                }
+            clickableVideo.addEventListener('ended', () => {
+                clickableVideo.style.opacity = "0.2";
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                seekBar.value = (audio.currentTime / audio.duration) * 100;
+            });
+
+            seekBar.addEventListener('input', () => {
+                const seekToTime = (seekBar.value / 100) * audio.duration;
+                audio.currentTime = seekToTime;
+                video.currentTime = seekToTime;
+                clickableVideo.currentTime = seekToTime;
             });
         });
     </script>
