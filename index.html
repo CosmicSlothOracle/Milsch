@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Milch Experience</title>
     <style>
         body,
@@ -120,12 +120,41 @@
                 font-size: 12px;
             }
         }
+
+        /* Mobile-specific controls */
+        #mobileControls {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            z-index: 2000;
+            text-align: center;
+        }
+
+        #playPauseButton {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: block;
+            }
+        }
     </style>
 </head>
 
 <body>
     <video id="backgroundVideo" muted>
-        <source src="https://link.storjshare.io/s/jupqhzkurt5ywvgxeco2jjrdhyqq/music/MilchIntro.mp4?download=1" type="video/mp4">
+        <source src="https://link.storjshare.io/s/jupqhzkurt5ywvgxeco2jjrdhyqq/music/MilchIntro.mp4?download=1"
+            type="video/mp4">
         Your browser does not support the video tag.
     </video>
 
@@ -133,19 +162,27 @@
 
     <div id="clickableVideoContainer">
         <video id="clickableVideo" muted>
-            <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
+            <source
+                src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1"
+                type="video/mp4">
             Your browser does not support the video tag.
         </video>
         <img id="frameOverlay" src="https://i.postimg.cc/9MRsCJQ0/image.png" alt="Frame Overlay">
     </div>
 
     <audio id="audioPlayer">
-        <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1" type="audio/flac">
+        <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1"
+            type="audio/flac">
         Your browser does not support the audio tag.
     </audio>
 
     <div class="audio-controls">
         <input id="seekBar" type="range" min="0" max="100" value="0">
+    </div>
+
+    <!-- New Mobile Controls -->
+    <div id="mobileControls">
+        <button id="playPauseButton">▶</button>
     </div>
 
     <script>
@@ -156,11 +193,12 @@
             const frameOverlay = document.getElementById('frameOverlay');
             const audio = document.getElementById('audioPlayer');
             const seekBar = document.getElementById('seekBar');
+            const playPauseButton = document.getElementById('playPauseButton');
             let isPlaying = false;
 
             clickableVideo.addEventListener('loadedmetadata', () => {
-                frameOverlay.style.height = `${clickableVideo.offsetHeight}px`;
-                frameOverlay.style.width = `${clickableVideo.offsetWidth}px`;
+                frameOverlay.style.height = `${ clickableVideo.offsetHeight }px`;
+                frameOverlay.style.width = `${ clickableVideo.offsetWidth }px`;
             });
 
             function togglePlayPause() {
@@ -201,6 +239,38 @@
                 audio.currentTime = seekToTime;
                 video.currentTime = seekToTime;
                 clickableVideo.currentTime = seekToTime;
+            });
+
+            // Mobile-specific play/pause functionality
+            function toggleMobilePlayPause() {
+                if (isPlaying) {
+                    video.pause();
+                    audio.pause();
+                    clickableVideo.pause();
+                    playPauseButton.textContent = '▶';
+                } else {
+                    video.play();
+                    audio.play();
+                    clickableVideo.play();
+                    playPauseButton.textContent = '❚❚';
+                }
+                isPlaying = !isPlaying;
+            }
+
+            // Add mobile play/pause button listener
+            playPauseButton.addEventListener('click', toggleMobilePlayPause);
+
+            // Enable background audio for mobile
+            audio.setAttribute('playsinline', '');
+            audio.setAttribute('webkit-playsinline', '');
+
+            // Handle audio interruptions
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    audio.pause();
+                } else if (isPlaying) {
+                    audio.play();
+                }
             });
         });
     </script>
