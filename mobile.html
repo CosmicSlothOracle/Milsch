@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milch Experience - Mobile</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: black;
+        }
+
+        #clickableVideoContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        #clickableVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #frameOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1001;
+            cursor: pointer;
+            background: url('https://i.postimg.cc/9MRsCJQ0/image.png') center center no-repeat;
+            background-size: cover;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="clickableVideoContainer">
+        <video id="clickableVideo" muted>
+            <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div id="frameOverlay"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const clickableVideo = document.getElementById('clickableVideo');
+            const frameOverlay = document.getElementById('frameOverlay');
+            const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
+            let isPlaying = false;
+
+            frameOverlay.addEventListener('click', () => {
+                if (isPlaying) {
+                    clickableVideo.pause();
+                } else {
+                    clickableVideo.play();
+                }
+                isPlaying = !isPlaying;
+            });
+
+            clickableVideo.addEventListener('ended', () => {
+                clickableVideo.src = loopVideoSource;
+                clickableVideo.loop = true;
+                clickableVideo.play();
+                frameOverlay.style.opacity = '0'; // Hide the frame when loop starts
+            });
+        });
+    </script>
+</body>
+
+</html>
