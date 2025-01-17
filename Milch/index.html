@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Milch Experience</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #backgroundVideo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #clickableVideoContainer {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 450px;
+            height: auto;
+            z-index: 1000;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        #clickableVideo {
+            width: 100%;
+            height: auto;
+            opacity: 1;
+            transition: opacity 1s ease;
+        }
+
+        #frameOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1001;
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        #topLeftImage {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 400px;
+            height: auto;
+            opacity: 1;
+            z-index: 1000;
+        }
+
+        .audio-controls {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #seekBar {
+            flex: 1;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            #clickableVideoContainer {
+                width: 300px;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            #clickableVideo {
+                max-width: 100%;
+                height: auto;
+            }
+
+            #topLeftImage {
+                width: 250px;
+            }
+
+            .audio-controls {
+                padding: 5px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #clickableVideoContainer {
+                width: 150px;
+                bottom: 15px;
+                right: 15px;
+            }
+
+            #topLeftImage {
+                width: 150px;
+            }
+
+            .audio-controls {
+                padding: 4px;
+                font-size: 12px;
+            }
+        }
+
+        /* Mobile-specific controls */
+        #mobileControls {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            z-index: 2000;
+            text-align: center;
+        }
+
+        #playPauseButton {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: block;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <video id="backgroundVideo" muted>
+        <source src="https://link.storjshare.io/s/jupqhzkurt5ywvgxeco2jjrdhyqq/music/MilchIntro.mp4?download=1"
+            type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <img id="topLeftImage" src="https://i.postimg.cc/CM2rmXbX/milch.png" alt="Milch Logo">
+
+    <div id="clickableVideoContainer">
+        <video id="clickableVideo" muted>
+            <source
+                src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1"
+                type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <img id="frameOverlay" src="https://i.postimg.cc/9MRsCJQ0/image.png" alt="Frame Overlay">
+    </div>
+
+    <audio id="audioPlayer">
+        <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1"
+            type="audio/flac">
+        Your browser does not support the audio tag.
+    </audio>
+
+    <div class="audio-controls">
+        <input id="seekBar" type="range" min="0" max="100" value="0">
+    </div>
+
+    <!-- New Mobile Controls -->
+    <div id="mobileControls">
+        <button id="playPauseButton">▶</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('backgroundVideo');
+            const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
+            const clickableVideo = document.getElementById('clickableVideo');
+            const frameOverlay = document.getElementById('frameOverlay');
+            const audio = document.getElementById('audioPlayer');
+            const seekBar = document.getElementById('seekBar');
+            const playPauseButton = document.getElementById('playPauseButton');
+            let isPlaying = false;
+            let audioContext = null;
+            let audioSource = null;
+
+            clickableVideo.addEventListener('loadedmetadata', () => {
+                frameOverlay.style.height = `${ clickableVideo.offsetHeight }px`;
+                frameOverlay.style.width = `${ clickableVideo.offsetWidth }px`;
+            });
+
+            function togglePlayPause() {
+                if (isPlaying) {
+                    video.pause();
+                    audio.pause();
+                    clickableVideo.pause();
+                    clickableVideo.style.opacity = "1";
+                    playPauseButton.textContent = '▶';
+                } else {
+                    video.play();
+                    audio.play();
+                    clickableVideo.play();
+                    clickableVideo.style.opacity = "1";
+                    playPauseButton.textContent = '❚❚';
+                }
+                isPlaying = !isPlaying;
+
+                // Update Media Session playback state
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+                }
+            }
+
+            frameOverlay.addEventListener('click', () => {
+                togglePlayPause();
+            });
+
+            video.addEventListener('ended', () => {
+                video.src = loopVideoSource;
+                video.loop = true;
+                video.play();
+            });
+
+            clickableVideo.addEventListener('ended', () => {
+                clickableVideo.style.opacity = "0.2";
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                seekBar.value = (audio.currentTime / audio.duration) * 100;
+            });
+
+            seekBar.addEventListener('input', () => {
+                const seekToTime = (seekBar.value / 100) * audio.duration;
+                audio.currentTime = seekToTime;
+                video.currentTime = seekToTime;
+                clickableVideo.currentTime = seekToTime;
+            });
+
+            // Mobile-specific play/pause functionality
+            function toggleMobilePlayPause() {
+                if (isPlaying) {
+                    video.pause();
+                    audio.pause();
+                    clickableVideo.pause();
+                    playPauseButton.textContent = '▶';
+                } else {
+                    video.play();
+                    audio.play();
+                    clickableVideo.play();
+                    playPauseButton.textContent = '❚❚';
+                }
+                isPlaying = !isPlaying;
+            }
+
+            // Add mobile play/pause button listener
+            playPauseButton.addEventListener('click', toggleMobilePlayPause);
+
+            // Enable background audio for mobile
+            audio.setAttribute('playsinline', '');
+            audio.setAttribute('webkit-playsinline', '');
+
+            // Handle audio interruptions
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    audio.pause();
+                } else if (isPlaying) {
+                    audio.play();
+                }
+            });
+
+            // New Media Session API Integration
+            function setupMediaSession() {
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: 'Milch Experience',
+                        artist: 'Milch',
+                        // Optional: album artwork
+                        artwork: [
+                            { src: 'https://i.postimg.cc/CM2rmXbX/milch.png', sizes: '400x400', type: 'image/png' }
+                        ]
+                    });
+
+                    navigator.mediaSession.setActionHandler('play', () => {
+                        togglePlayPause();
+                    });
+
+                    navigator.mediaSession.setActionHandler('pause', () => {
+                        togglePlayPause();
+                    });
+                }
+            }
+
+            // Modify togglePlayPause to work with Media Session
+            function togglePlayPause() {
+                if (isPlaying) {
+                    video.pause();
+                    audio.pause();
+                    clickableVideo.pause();
+                    clickableVideo.style.opacity = "1";
+                    playPauseButton.textContent = '▶';
+                } else {
+                    video.play();
+                    audio.play();
+                    clickableVideo.play();
+                    clickableVideo.style.opacity = "1";
+                    playPauseButton.textContent = '❚❚';
+                }
+                isPlaying = !isPlaying;
+
+                // Update Media Session playback state
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+                }
+            }
+
+            // Modify existing event listeners
+            frameOverlay.addEventListener('click', () => {
+                togglePlayPause();
+            });
+
+            playPauseButton.addEventListener('click', () => {
+                togglePlayPause();
+            });
+
+            // Initialize Media Session on page load
+            setupMediaSession();
+        });
+    </script>
+</body>
+
+</html>
