@@ -26,9 +26,9 @@
 
         #clickableVideoContainer {
             position: fixed;
-            bottom: 10px; /* Align to bottom-right */
-            right: 10px; /* Align to bottom-right */
-            width: 450px; /* Tripled original width */
+            bottom: 10px;
+            right: 10px;
+            width: 450px;
             height: auto;
             z-index: 1000;
             overflow: hidden;
@@ -38,8 +38,8 @@
         #clickableVideo {
             width: 100%;
             height: auto;
-            opacity: 0.3; /* Initial transparency */
-            pointer-events: none; /* Disable interaction with the video */
+            opacity: 1; /* Fully visible initially */
+            transition: opacity 1s ease;
         }
 
         #frameOverlay {
@@ -48,19 +48,18 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1001; /* Above video */
-            cursor: pointer; /* Indicates the frame is clickable */
-            opacity: 0.3; /* Initial frame transparency */
-            transition: opacity 0.5s ease; /* Smooth opacity transition */
+            z-index: 1001;
+            cursor: pointer;
+            opacity: 1;
         }
 
         #topLeftImage {
             position: fixed;
             top: 10px;
             left: 10px;
-            width: 400px; /* Double the original size (200px) */
+            width: 400px;
             height: auto;
-            opacity: 1; /* Fully opaque */
+            opacity: 1;
             z-index: 1000;
         }
 
@@ -81,6 +80,46 @@
         #seekBar {
             flex: 1;
         }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            #clickableVideoContainer {
+                width: 200px; /* Scale down for smaller screens */
+                bottom: 5px; /* Adjust bottom margin */
+                right: 5px; /* Adjust right margin */
+            }
+
+            #topLeftImage {
+                width: 200px; /* Scale down logo */
+            }
+
+            .audio-controls {
+                bottom: 5px;
+                left: 5px;
+                right: 5px;
+                padding: 5px;
+                font-size: 14px; /* Adjust text size */
+            }
+
+            #seekBar {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #clickableVideoContainer {
+                width: 150px; /* Further scale down for very small screens */
+            }
+
+            #topLeftImage {
+                width: 150px; /* Smaller logo for small phones */
+            }
+
+            .audio-controls {
+                font-size: 12px; /* Further adjust text size */
+                padding: 5px;
+            }
+        }
     </style>
 </head>
 
@@ -97,7 +136,6 @@
             <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
             Your browser does not support the video tag.
         </video>
-        <!-- Frame overlay -->
         <img id="frameOverlay" src="https://i.postimg.cc/9MRsCJQ0/image.png" alt="Frame Overlay">
     </div>
 
@@ -120,48 +158,44 @@
             const seekBar = document.getElementById('seekBar');
             let isPlaying = false;
 
-            // Adjust frame overlay dynamically to match the clickable video
             clickableVideo.addEventListener('loadedmetadata', () => {
                 frameOverlay.style.height = `${clickableVideo.offsetHeight}px`;
                 frameOverlay.style.width = `${clickableVideo.offsetWidth}px`;
             });
 
-            // Play/pause functionality with opacity adjustments
             function togglePlayPause() {
                 if (isPlaying) {
                     video.pause();
                     audio.pause();
                     clickableVideo.pause();
-                    frameOverlay.style.opacity = "0.3"; // Reset frame transparency
-                    clickableVideo.style.opacity = "0.3"; // Reset video transparency
+                    clickableVideo.style.opacity = "1";
                 } else {
                     video.play();
                     audio.play();
                     clickableVideo.play();
-                    frameOverlay.style.opacity = "0.3"; // Frame 30% opacity
-                    clickableVideo.style.opacity = "0.1"; // Video 10% opacity
+                    clickableVideo.style.opacity = "1";
                 }
                 isPlaying = !isPlaying;
             }
 
-            // Make the frame overlay clickable
             frameOverlay.addEventListener('click', () => {
                 togglePlayPause();
             });
 
-            // Set up looping of background video
             video.addEventListener('ended', () => {
                 video.src = loopVideoSource;
                 video.loop = true;
                 video.play();
             });
 
-            // Sync seek bar with audio progress
+            clickableVideo.addEventListener('ended', () => {
+                clickableVideo.style.opacity = "0.2";
+            });
+
             audio.addEventListener('timeupdate', () => {
                 seekBar.value = (audio.currentTime / audio.duration) * 100;
             });
 
-            // Seek functionality
             seekBar.addEventListener('input', () => {
                 const seekToTime = (seekBar.value / 100) * audio.duration;
                 audio.currentTime = seekToTime;
