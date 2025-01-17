@@ -54,7 +54,7 @@
 <body>
     <div id="playerContainer">
         <!-- Video integrated into the background -->
-        <video id="video" muted autoplay playsinline>
+        <video id="video" muted playsinline>
             <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
         </video>
         <div id="frameOverlay"></div>
@@ -67,7 +67,7 @@
             const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
             let isPlaying = false;
 
-            // Play/Pause functionality on click
+            // Play/Pause functionality on a single tap anywhere
             frameOverlay.addEventListener('click', () => {
                 if (isPlaying) {
                     video.pause();
