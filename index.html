@@ -26,8 +26,8 @@
 
         #clickableVideoContainer {
             position: fixed;
-            bottom: 70px;
-            right: 10px;
+            bottom: 10px; /* Align to bottom-right */
+            right: 10px; /* Align to bottom-right */
             width: 450px; /* Tripled original width */
             height: auto;
             z-index: 1000;
@@ -50,6 +50,8 @@
             height: 100%;
             z-index: 1001; /* Above video */
             cursor: pointer; /* Indicates the frame is clickable */
+            opacity: 0.3; /* Initial frame transparency */
+            transition: opacity 0.5s ease; /* Smooth opacity transition */
         }
 
         #topLeftImage {
@@ -124,18 +126,20 @@
                 frameOverlay.style.width = `${clickableVideo.offsetWidth}px`;
             });
 
-            // Play/pause functionality
+            // Play/pause functionality with opacity adjustments
             function togglePlayPause() {
                 if (isPlaying) {
                     video.pause();
                     audio.pause();
                     clickableVideo.pause();
-                    clickableVideo.style.opacity = "0.3"; // Reset to initial transparency
+                    frameOverlay.style.opacity = "0.3"; // Reset frame transparency
+                    clickableVideo.style.opacity = "0.3"; // Reset video transparency
                 } else {
                     video.play();
                     audio.play();
                     clickableVideo.play();
-                    clickableVideo.style.opacity = "0.9"; // Active playing transparency
+                    frameOverlay.style.opacity = "0.3"; // Frame 30% opacity
+                    clickableVideo.style.opacity = "0.1"; // Video 10% opacity
                 }
                 isPlaying = !isPlaying;
             }
