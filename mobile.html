@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Milch Experience - Mobile</title>
     <style>
+        /* General styles */
         body,
         html {
             margin: 0;
@@ -16,17 +17,17 @@
             background-color: black;
         }
 
-        #clickableVideoContainer {
+        #playerContainer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1000;
+            background-color: black;
             overflow: hidden;
         }
 
-        #clickableVideo {
+        #video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -38,45 +39,142 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1001;
+            z-index: 2;
             cursor: pointer;
             background: url('https://i.postimg.cc/9MRsCJQ0/image.png') center center no-repeat;
-            background-size: cover;
+            background-size: contain;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #seekBar {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #seekBar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        #seekBar::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        #timeDisplay {
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        /* Fullscreen styles */
+        #playerContainer.fullscreen {
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
 
 <body>
-    <div id="clickableVideoContainer">
-        <video id="clickableVideo" muted>
-            <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
+    <div id="playerContainer">
+        <video id="video" src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1"></video>
         <div id="frameOverlay"></div>
+        <div id="controls">
+            <input id="seekBar" type="range" min="0" max="100" value="0">
+            <span id="timeDisplay">0:00 / 0:00</span>
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const clickableVideo = document.getElementById('clickableVideo');
+            const playerContainer = document.getElementById('playerContainer');
+            const video = document.getElementById('video');
             const frameOverlay = document.getElementById('frameOverlay');
-            const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
+            const seekBar = document.getElementById('seekBar');
+            const timeDisplay = document.getElementById('timeDisplay');
             let isPlaying = false;
+            let isFullscreen = false;
 
+            // Update the seek bar and time display
+            const updateSeekBar = () => {
+                const currentTime = video.currentTime;
+                const duration = video.duration;
+
+                if (!isNaN(duration)) {
+                    seekBar.value = (currentTime / duration) * 100;
+                    timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+                }
+            };
+
+            // Format time as mm:ss
+            const formatTime = (time) => {
+                const minutes = Math.floor(time / 60);
+                const seconds = Math.floor(time % 60);
+                return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            };
+
+            // Toggle play/pause on single tap
             frameOverlay.addEventListener('click', () => {
                 if (isPlaying) {
-                    clickableVideo.pause();
+                    video.pause();
                 } else {
-                    clickableVideo.play();
+                    video.play();
                 }
                 isPlaying = !isPlaying;
             });
 
-            clickableVideo.addEventListener('ended', () => {
-                clickableVideo.src = loopVideoSource;
-                clickableVideo.loop = true;
-                clickableVideo.play();
-                frameOverlay.style.opacity = '0'; // Hide the frame when loop starts
+            // Toggle fullscreen on double tap
+            let lastTap = 0;
+            frameOverlay.addEventListener('dblclick', () => {
+                const currentTap = new Date().getTime();
+                if (currentTap - lastTap < 300) {
+                    if (isFullscreen) {
+                        document.exitFullscreen();
+                    } else {
+                        playerContainer.requestFullscreen();
+                    }
+                    isFullscreen = !isFullscreen;
+                }
+                lastTap = currentTap;
             });
+
+            // Sync video position with seek bar
+            seekBar.addEventListener('input', () => {
+                const seekTo = (seekBar.value / 100) * video.duration;
+                video.currentTime = seekTo;
+            });
+
+            // Update seek bar and time display as video plays
+            video.addEventListener('timeupdate', updateSeekBar);
+
+            // Prevent default fullscreen on play
+            video.addEventListener('play', (event) => event.preventDefault());
         });
     </script>
 </body>
