@@ -48,6 +48,48 @@
             z-index: 2;
             cursor: pointer;
         }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 10px;
+            right: 10px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #seekBar {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #seekBar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+        }
+
+        #seekBar::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -59,6 +101,10 @@
         </video>
         <!-- Overlay for interaction -->
         <div id="frameOverlay"></div>
+        <!-- Controls with seek bar -->
+        <div id="controls">
+            <input id="seekBar" type="range" min="0" max="100" value="0">
+        </div>
         <!-- Audio element -->
         <audio id="audio">
             <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1" type="audio/flac">
@@ -71,8 +117,26 @@
             const video = document.getElementById('video');
             const audio = document.getElementById('audio');
             const frameOverlay = document.getElementById('frameOverlay');
+            const seekBar = document.getElementById('seekBar');
             const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
             let isPlaying = false;
+
+            // Sync seek bar with video and audio
+            const updateSeekBar = () => {
+                const currentTime = video.currentTime;
+                const duration = video.duration;
+
+                if (!isNaN(duration)) {
+                    seekBar.value = (currentTime / duration) * 100;
+                }
+            };
+
+            // Update video and audio position when the seek bar is changed
+            seekBar.addEventListener('input', () => {
+                const seekToTime = (seekBar.value / 100) * video.duration;
+                video.currentTime = seekToTime;
+                audio.currentTime = seekToTime;
+            });
 
             // Play/Pause functionality on a single tap anywhere
             frameOverlay.addEventListener('click', () => {
@@ -92,6 +156,9 @@
                 video.loop = true;
                 video.play();
             });
+
+            // Update the seek bar as the video plays
+            video.addEventListener('timeupdate', updateSeekBar);
 
             // Ensure the video always scales to fill the background
             video.addEventListener('loadedmetadata', () => {
