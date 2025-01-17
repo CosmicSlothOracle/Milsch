@@ -57,12 +57,19 @@
         <video id="video" muted playsinline>
             <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
         </video>
+        <!-- Overlay for interaction -->
         <div id="frameOverlay"></div>
+        <!-- Audio element -->
+        <audio id="audio">
+            <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1" type="audio/flac">
+            Your browser does not support the audio tag.
+        </audio>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const video = document.getElementById('video');
+            const audio = document.getElementById('audio');
             const frameOverlay = document.getElementById('frameOverlay');
             const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
             let isPlaying = false;
@@ -71,8 +78,10 @@
             frameOverlay.addEventListener('click', () => {
                 if (isPlaying) {
                     video.pause();
+                    audio.pause();
                 } else {
                     video.play();
+                    audio.play();
                 }
                 isPlaying = !isPlaying;
             });
