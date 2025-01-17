@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1">
     <title>Milch Experience</title>
     <style>
         body,
@@ -38,7 +38,7 @@
         #clickableVideo {
             width: 100%;
             height: auto;
-            opacity: 1; /* Fully visible initially */
+            opacity: 1;
             transition: opacity 1s ease;
         }
 
@@ -84,40 +84,40 @@
         /* Mobile Optimization */
         @media (max-width: 768px) {
             #clickableVideoContainer {
-                width: 200px; /* Scale down for smaller screens */
-                bottom: 5px; /* Adjust bottom margin */
-                right: 5px; /* Adjust right margin */
+                width: 300px;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            #clickableVideo {
+                max-width: 100%;
+                height: auto;
             }
 
             #topLeftImage {
-                width: 200px; /* Scale down logo */
+                width: 250px;
             }
 
             .audio-controls {
-                bottom: 5px;
-                left: 5px;
-                right: 5px;
                 padding: 5px;
-                font-size: 14px; /* Adjust text size */
-            }
-
-            #seekBar {
-                flex: 1;
+                font-size: 14px;
             }
         }
 
         @media (max-width: 480px) {
             #clickableVideoContainer {
-                width: 150px; /* Further scale down for very small screens */
+                width: 150px;
+                bottom: 15px;
+                right: 15px;
             }
 
             #topLeftImage {
-                width: 150px; /* Smaller logo for small phones */
+                width: 150px;
             }
 
             .audio-controls {
-                font-size: 12px; /* Further adjust text size */
-                padding: 5px;
+                padding: 4px;
+                font-size: 12px;
             }
         }
     </style>
