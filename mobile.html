@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Milch Experience - Mobile</title>
     <style>
+        /* Reset styles */
         body,
         html {
             margin: 0;
@@ -15,6 +16,7 @@
             background-color: black;
         }
 
+        /* Container for the video player */
         #playerContainer {
             position: fixed;
             top: 0;
@@ -25,6 +27,7 @@
             overflow: hidden;
         }
 
+        /* Main video element */
         #video {
             position: absolute;
             top: 0;
@@ -36,6 +39,7 @@
             background: black;
         }
 
+        /* Overlay for play/pause interaction */
         #frameOverlay {
             position: absolute;
             top: 0;
@@ -48,61 +52,85 @@
             cursor: pointer;
         }
 
+        /* Controls container */
         #controls {
-            position: absolute;
-            top: 10%;
-            right: 10px;
-            z-index: 3;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
             display: flex;
             align-items: center;
+            justify-content: center;
             background: rgba(0, 0, 0, 0.6);
-            padding: 10px;
-            border-radius: 10px;
+            padding: 20px;
+            z-index: 3;
         }
 
+        /* Horizontal seek bar */
         #seekBar {
-            width: 8px;
-            height: 300px;
+            width: 80%;
+            height: 15px;
             -webkit-appearance: none;
             appearance: none;
             background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
+            border-radius: 7px;
             outline: none;
             cursor: pointer;
-            writing-mode: bt-lr; /* Makes the slider vertical */
         }
 
+        /* Custom styles for slider thumb */
         #seekBar::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 15px;
-            height: 15px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background: white;
             cursor: pointer;
         }
 
         #seekBar::-moz-range-thumb {
-            width: 15px;
-            height: 15px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background: white;
             cursor: pointer;
+        }
+
+        /* Add fade-in and fade-out transitions for the clickable video */
+        .fade-in {
+            opacity: 1;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
         }
     </style>
 </head>
 
 <body>
     <div id="playerContainer">
+        <!-- Video player -->
         <video id="video" muted playsinline>
-            <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
+            <source
+                src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1"
+                type="video/mp4">
             Your browser does not support the video tag.
         </video>
+
+        <!-- Frame overlay for interaction -->
         <div id="frameOverlay"></div>
+
+        <!-- Controls with seek bar -->
         <div id="controls">
             <input id="seekBar" type="range" min="0" max="100" value="0">
         </div>
+
+        <!-- Audio player -->
         <audio id="audio">
-            <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1" type="audio/flac">
+            <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1"
+                type="audio/flac">
             Your browser does not support the audio tag.
         </audio>
     </div>
@@ -111,64 +139,79 @@
         document.addEventListener('DOMContentLoaded', () => {
             const video = document.getElementById('video');
             const audio = document.getElementById('audio');
-            const frameOverlay = document.getElementById('frameOverlay');
             const seekBar = document.getElementById('seekBar');
-            const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
-            const introVideoSource = "https://link.storjshare.io/s/jupqhzkurt5ywvgxeco2jjrdhyqq/music/MilchIntro.mp4?download=1";
-            let isPlaying = false;
-            let currentStage = "clickVideo"; // Tracks the current stage
+            const frameOverlay = document.getElementById('frameOverlay');
 
-            // Dynamically update the seek bar based on the combined media duration
-            const updateSeekBar = () => {
-                const totalDuration = audio.duration; // Only audio determines the entire duration
-                const elapsedTime = audio.currentTime; // Reflect progress via audio time
-                if (!isNaN(totalDuration)) {
-                    seekBar.value = (elapsedTime / totalDuration) * 100;
-                }
-            };
+            // Define intro and loop segment times for the single video
+            const introDuration = 10; // seconds, for example
+            const loopStart = 10;     // begin loop after intro
+            const loopEnd = 60;      // loop end in seconds
 
-            // Play/Pause toggle
-            frameOverlay.addEventListener('click', () => {
+            // Fade logic: clicking the overlay snaps to full opacity; fade out on play
+            function applyFade(isPlaying) {
                 if (isPlaying) {
-                    video.pause();
-                    audio.pause();
+                    frameOverlay.classList.remove('fade-in');
+                    frameOverlay.classList.add('fade-out');
                 } else {
-                    video.currentTime = 0; // Reset the video to the first frame
-                    video.play();
+                    frameOverlay.classList.remove('fade-out');
+                    frameOverlay.classList.add('fade-in');
+                }
+            }
+
+            // Override togglePlayPause to handle fade + video looping
+            function togglePlayPause() {
+                if (audio.paused) {
                     audio.play();
+                    video.play();
+                    applyFade(true);
+                } else {
+                    audio.pause();
+                    video.pause();
+                    applyFade(false);
                 }
-                isPlaying = !isPlaying;
+            }
+
+            // Keep video looping properly after intro
+            video.addEventListener('timeupdate', () => {
+                // If we're past the intro, loop within the loop region
+                if (video.currentTime >= loopEnd) {
+                    video.currentTime = loopStart +
+                        (video.currentTime - loopEnd);
+                }
             });
 
-            // Handle video transitions and looping
-            video.addEventListener('ended', () => {
-                if (currentStage === "clickVideo") {
-                    currentStage = "introVideo";
-                    video.src = introVideoSource;
-                    video.play();
-                } else if (currentStage === "introVideo") {
-                    currentStage = "loopVideo";
-                    video.src = loopVideoSource;
-                    video.loop = true;
-                    video.play();
+            // Update seek bar as audio plays, sync video time with audio
+            audio.addEventListener('timeupdate', () => {
+                seekBar.value = (audio.currentTime / audio.duration) * 100;
+
+                // Determine if we are still in the intro or in the loop
+                if (audio.currentTime < introDuration) {
+                    video.currentTime = audio.currentTime;
+                } else {
+                    // map currentTime into the loop region
+                    const loopLength = loopEnd - loopStart;
+                    const elapsedAfterIntro = audio.currentTime - introDuration;
+                    video.currentTime = loopStart + (elapsedAfterIntro % loopLength);
                 }
             });
 
-            // Seek bar adjustment for user input
+            // Seek within audio, move video to correct spot (intro or loop)
             seekBar.addEventListener('input', () => {
-                const totalDuration = audio.duration; // Total duration is derived from audio
-                const seekToTime = (seekBar.value / 100) * totalDuration;
-                audio.currentTime = seekToTime;
-                video.currentTime = Math.min(seekToTime, video.duration); // Sync video if possible
+                if (!isNaN(audio.duration)) {
+                    const seekToTime = (seekBar.value / 100) * audio.duration;
+                    audio.currentTime = seekToTime;
+                    if (seekToTime < introDuration) {
+                        video.currentTime = seekToTime;
+                    } else {
+                        const loopLength = loopEnd - loopStart;
+                        const elapsedAfterIntro = seekToTime - introDuration;
+                        video.currentTime = loopStart + (elapsedAfterIntro % loopLength);
+                    }
+                }
             });
 
-            // Keep seek bar updated as audio and video play
-            video.addEventListener('timeupdate', updateSeekBar);
-            audio.addEventListener('timeupdate', updateSeekBar);
-
-            // Ensure metadata is loaded before calculations
-            video.addEventListener('loadedmetadata', updateSeekBar);
-            audio.addEventListener('loadedmetadata', updateSeekBar);
+            // Play/pause when tapping the overlay
+            frameOverlay.addEventListener('click', togglePlayPause);
         });
     </script>
 </body>
