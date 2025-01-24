@@ -43,8 +43,6 @@
             width: 100%;
             height: 100%;
             border-radius: 20px;
-            border: 3px solid;
-            animation: gradientBorder 3s infinite;
             overflow: hidden;
             transform-style: preserve-3d;
             background: #000;
@@ -73,11 +71,14 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 128px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 30px 0 30px 52px;
+            /* Creates a triangle shape */
+            border-color: transparent transparent transparent rgba(255, 255, 255, 0.8);
+            /* 80% opacity white */
             z-index: 3;
-            color: #ffffff;
-            opacity: 1;
-            /* Always fully visible by default */
             pointer-events: none;
             transition: opacity 0.2s ease-out;
         }
@@ -91,17 +92,16 @@
             transform: translateZ(0) translateY(0) translateX(0);
             z-index: 4;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .video-square:nth-child(2) {
-            transform: translateZ(-100px) translateY(-20px) translateX(20px);
+            transform: translateZ(-100px) translateY(-30px) translateX(40px);
             z-index: 3;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
         }
 
         .video-square:nth-child(3) {
-            transform: translateZ(-200px) translateY(-40px) translateX(40px);
+            transform: translateZ(-200px) translateY(-60px) translateX(80px);
             z-index: 2;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
@@ -163,19 +163,11 @@
         }
 
         @keyframes gradientBorder {
-            0% {
-                border-image: linear-gradient(45deg, #ff69b4, #ffffff, #800080) 1;
-                border-image-slice: 1;
-            }
 
-            50% {
-                border-image: linear-gradient(225deg, #ff69b4, #ffffff, #800080) 1;
-                border-image-slice: 1;
-            }
-
+            0%,
+            50%,
             100% {
-                border-image: linear-gradient(45deg, #ff69b4, #ffffff, #800080) 1;
-                border-image-slice: 1;
+                border-color: transparent;
             }
         }
 
@@ -311,7 +303,7 @@
             <div class="video-container">
                 <div class="flare-large"></div>
                 <div class="flare-small"></div>
-                <div class="play-icon">▶</div>
+                <div class="play-icon"></div>
                 <video class="video-element" playsinline>
                     <source
                         src="https://link.storjshare.io/s/judkq6l5jb23l4wvofr7jre55mbq/music/Video_top_left_square.mp4?download=1"
@@ -325,7 +317,7 @@
             <div class="video-container">
                 <div class="flare-large"></div>
                 <div class="flare-small"></div>
-                <div class="play-icon">▶</div>
+                <div class="play-icon"></div>
                 <video class="video-element" playsinline>
                     <source
                         src="https://link.storjshare.io/s/jwkgpoicxz4xat5q3onesadv6e5a/music/Video_top_right_square.mp4?download=1"
@@ -341,7 +333,7 @@
             <div class="video-container">
                 <div class="flare-large"></div>
                 <div class="flare-small"></div>
-                <div class="play-icon">▶</div>
+                <div class="play-icon"></div>
                 <video class="video-element" playsinline>
                     <source
                         src="https://link.storjshare.io/s/jwa6btk3dccmz77ng57srx3knotq/music/bottom_right_video_nofame.mp4?download=1"

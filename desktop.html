@@ -28,7 +28,6 @@
         .video-square {
             position: absolute;
             width: calc(100vh * 0.4);
-            /* Adjusted for desktop aspect ratio */
             height: calc((100vh * 0.4) * 2);
             max-height: 90vh;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -98,7 +97,7 @@
             opacity: 0;
         }
 
-        /* Card positioning with shadows */
+        /* Card positioning with shadows - updated positions */
         .video-square:nth-child(1) {
             transform: translateZ(0) translateY(0) translateX(0);
             z-index: 4;
@@ -106,13 +105,15 @@
         }
 
         .video-square:nth-child(2) {
-            transform: translateZ(-100px) translateY(-20px) translateX(20px);
+            transform: translateZ(-100px) translateY(-30px) translateX(40px);
+            /* Adjusted Y and X */
             z-index: 3;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
         }
 
         .video-square:nth-child(3) {
-            transform: translateZ(-200px) translateY(-40px) translateX(40px);
+            transform: translateZ(-200px) translateY(-60px) translateX(80px);
+            /* Adjusted Y and X */
             z-index: 2;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
