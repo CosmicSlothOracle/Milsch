@@ -4,166 +4,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milch Experience</title>
+    <title>Milch Experience Desktop</title>
     <style>
         body,
         html {
             margin: 0;
             padding: 0;
             height: 100%;
-            overflow: hidden;
+            background: #000;
             font-family: Arial, sans-serif;
+            overflow: hidden;
+            perspective: 1000px;
         }
 
-        #backgroundVideo {
+        .carousel-container {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-square {
             position: absolute;
-            top: 0;
-            left: 0;
+            width: calc(100vh * 0.4);
+            /* Adjusted for desktop aspect ratio */
+            height: calc((100vh * 0.4) * 2);
+            max-height: 90vh;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+            cursor: pointer;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            background: #000;
+        }
+
+        .video-element {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        #clickableVideoContainer {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            width: 450px;
-            height: auto;
-            z-index: 1000;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        #clickableVideo {
-            width: 100%;
-            height: auto;
-            opacity: 1;
-            transition: opacity 1s ease;
-        }
-
-        #frameOverlay {
+        /* Special scaling for top right square video */
+        .video-square:nth-child(2) .video-element {
+            width: 95%;
+            height: 90%;
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+
+        .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 128px;
+            z-index: 3;
+            color: #ffffff;
+            opacity: 1;
+            pointer-events: none;
+            transition: opacity 0.2s ease-out;
+        }
+
+        .play-icon.hidden {
+            opacity: 0;
+        }
+
+        /* Flare effects */
+        .flare-large,
+        .flare-small {
+            position: absolute;
+            width: 150%;
             height: 100%;
-            z-index: 1001;
-            cursor: pointer;
-            opacity: 1;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0.8),
+                    rgba(255, 255, 255, 0),
+                    transparent);
+            transform: translateX(-200%) skewX(-45deg);
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
         }
 
-        #topLeftImage {
+        /* Card positioning with shadows */
+        .video-square:nth-child(1) {
+            transform: translateZ(0) translateY(0) translateX(0);
+            z-index: 4;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .video-square:nth-child(2) {
+            transform: translateZ(-100px) translateY(-20px) translateX(20px);
+            z-index: 3;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .video-square:nth-child(3) {
+            transform: translateZ(-200px) translateY(-40px) translateX(40px);
+            z-index: 2;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-square.expanded {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            width: 400px;
-            height: auto;
-            opacity: 1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.5) !important;
+            width: 60vw;
+            height: calc(60vw * 2);
+            z-index: 10;
+        }
+
+        /* Controls UI */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1000;
-        }
-
-        .audio-controls {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
             display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 1000;
+            gap: 20px;
             background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .carousel-container:hover .controls {
+            opacity: 1;
         }
 
         #seekBar {
-            flex: 1;
+            width: 300px;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
         }
     </style>
 </head>
 
 <body>
-    <video id="backgroundVideo" muted>
-        <source src="https://link.storjshare.io/s/jupqhzkurt5ywvgxeco2jjrdhyqq/music/MilchIntro.mp4?download=1" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-
-    <img id="topLeftImage" src="https://i.postimg.cc/CM2rmXbX/milch.png" alt="Milch Logo">
-
-    <div id="clickableVideoContainer">
-        <video id="clickableVideo" muted>
-            <source src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <img id="frameOverlay" src="https://i.postimg.cc/9MRsCJQ0/image.png" alt="Frame Overlay">
+    <!-- Instructions -->
+    <div class="instructions">
+        Controls:<br>
+        ← → Arrow keys: Navigate<br>
+        Space: Play/Pause<br>
+        Double-click: Expand/Shrink<br>
+        Scroll: Seek video
     </div>
 
-    <audio id="audioPlayer">
-        <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1" type="audio/flac">
-        Your browser does not support the audio tag.
-    </audio>
+    <!-- Main carousel -->
+    <div class="carousel-container">
+        <!-- Top Left Square -->
+        <div class="video-square" data-color="#ff69b4">
+            <div class="video-container">
+                <div class="flare-large"></div>
+                <div class="flare-small"></div>
+                <div class="play-icon">▶</div>
+                <video class="video-element">
+                    <source
+                        src="https://link.storjshare.io/s/judkq6l5jb23l4wvofr7jre55mbq/music/Video_top_left_square.mp4?download=1"
+                        type="video/mp4">
+                </video>
+                <img class="frame-overlay" src="https://i.postimg.cc/PxNpfxZk/top-left-square-frame.png" alt="Frame">
+            </div>
+        </div>
+        <!-- Top Right Square -->
+        <div class="video-square" data-color="#800080">
+            <div class="video-container">
+                <div class="flare-large"></div>
+                <div class="flare-small"></div>
+                <div class="play-icon">▶</div>
+                <video class="video-element">
+                    <source
+                        src="https://link.storjshare.io/s/jwkgpoicxz4xat5q3onesadv6e5a/music/Video_top_right_square.mp4?download=1"
+                        type="video/mp4">
+                </video>
+                <img class="frame-overlay"
+                    src="https://link.storjshare.io/s/jwyyaihcbzd6djw2urxxx64ck5eq/music/top_right_square_frame.png?download=1"
+                    alt="Frame">
+            </div>
+        </div>
+        <!-- Bottom Right Square -->
+        <div class="video-square" data-color="#40E0D0">
+            <div class="video-container">
+                <div class="flare-large"></div>
+                <div class="flare-small"></div>
+                <div class="play-icon">▶</div>
+                <video class="video-element">
+                    <source
+                        src="https://link.storjshare.io/s/jwa6btk3dccmz77ng57srx3knotq/music/bottom_right_video_nofame.mp4?download=1"
+                        type="video/mp4">
+                </video>
+            </div>
+        </div>
 
-    <div class="audio-controls">
-        <input id="seekBar" type="range" min="0" max="100" value="0">
+        <!-- Controls -->
+        <div class="controls">
+            <input type="range" id="seekBar" value="0" min="0" max="100">
+        </div>
     </div>
 
-    <script src="traffic.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const video = document.getElementById('backgroundVideo');
-            const loopVideoSource = "https://link.storjshare.io/s/jv3aw27ilzf4zak5qoormoksjsza/music/milchloop.MP4?download=1";
-            const clickableVideo = document.getElementById('clickableVideo');
-            const frameOverlay = document.getElementById('frameOverlay');
-            const audio = document.getElementById('audioPlayer');
-            const seekBar = document.getElementById('seekBar');
-            let isPlaying = false;
+            const container = document.querySelector('.carousel-container');
+            const squares = Array.from(document.querySelectorAll('.video-square'));
+            const seekBar = document.querySelector('#seekBar');
+            let currentIndex = 0;
+            let isExpanded = false;
+            let lastClick = 0;
 
-            // Ensure overlay matches the video size
-            clickableVideo.addEventListener('loadedmetadata', () => {
-                frameOverlay.style.height = `${clickableVideo.offsetHeight}px`;
-                frameOverlay.style.width = `${clickableVideo.offsetWidth}px`;
-            });
+            function updatePlayIcon(square, isPlaying) {
+                const playIcon = square.querySelector('.play-icon');
+                if (!playIcon) return;
 
-            function togglePlayPause() {
-                if (isPlaying) {
-                    video.pause();
-                    audio.pause();
-                    clickableVideo.pause();
-                    clickableVideo.style.opacity = "1";
-                } else {
-                    video.play();
-                    audio.play();
-                    clickableVideo.play();
-                    clickableVideo.style.opacity = "1";
-                }
-                isPlaying = !isPlaying;
+                playIcon.classList.toggle('hidden', isPlaying);
+                playIcon.style.opacity = isPlaying ? '0' : '1';
             }
 
-            frameOverlay.addEventListener('click', () => {
-                togglePlayPause();
-            });
+            function handleVideoSeek(video, seekBar) {
+                if (!video || !seekBar) return;
 
-            video.addEventListener('ended', () => {
-                video.src = loopVideoSource;
+                let isUserSeeking = false;
+
+                video.addEventListener('timeupdate', () => {
+                    if (!isUserSeeking && !video.paused) {
+                        const progress = (video.currentTime / video.duration) * 100;
+                        if (!isNaN(progress)) {
+                            seekBar.value = progress;
+                        }
+                    }
+                });
+
+                seekBar.addEventListener('mousedown', () => {
+                    isUserSeeking = true;
+                });
+
+                seekBar.addEventListener('mouseup', () => {
+                    isUserSeeking = false;
+                });
+
+                video.parentElement.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    if (!video.paused) {
+                        const delta = e.deltaY > 0 ? 1 : -1;
+                        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + delta));
+                    }
+                }, { passive: false });
+            }
+
+            function updatePositions(animate = false) {
+                requestAnimationFrame(() => {
+                    squares.forEach((square, index) => {
+                        if (isExpanded && index === currentIndex) return;
+
+                        const diff = (index - currentIndex + squares.length) % squares.length;
+                        square.style.transition = animate ? 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)' : 'none';
+                        square.style.transform = `
+                        translateZ(${ -100 * diff }px)
+                        translateY(${ -20 * diff }px)
+                        translateX(${ 20 * diff }px)
+                        scale(${ 1 - (diff * 0.05) })
+                    `;
+                        square.style.zIndex = squares.length - diff;
+                    });
+                });
+            }
+
+            function handleDoubleClick(square) {
+                const now = Date.now();
+                const DOUBLE_CLICK_DELAY = 300;
+
+                if (now - lastClick < DOUBLE_CLICK_DELAY) {
+                    if (!isExpanded) {
+                        square.classList.add('expanded');
+                    } else {
+                        square.classList.remove('expanded');
+                    }
+                    isExpanded = !isExpanded;
+                }
+                lastClick = now;
+            }
+
+            squares.forEach((square, index) => {
+                const video = square.querySelector('video');
+                if (!video) return;
+
+                video.load();
+                video.currentTime = 0;
+                video.muted = true;
                 video.loop = true;
-                video.play();
+
+                handleVideoSeek(video, seekBar);
+
+                square.addEventListener('click', () => {
+                    if (index === currentIndex) {
+                        handleDoubleClick(square);
+
+                        if (video.paused) {
+                            squares.forEach(s => {
+                                const v = s.querySelector('video');
+                                if (v && v !== video) {
+                                    v.pause();
+                                    v.currentTime = 0;
+                                    v.muted = true;
+                                    updatePlayIcon(s, false);
+                                }
+                            });
+
+                            video.muted = false;
+                            video.play()
+                                .then(() => updatePlayIcon(square, true))
+                                .catch(error => {
+                                    console.error('Error playing video:', error);
+                                    updatePlayIcon(square, false);
+                                });
+                        } else {
+                            video.pause();
+                            video.muted = true;
+                            updatePlayIcon(square, false);
+                        }
+                    }
+                });
             });
 
-            clickableVideo.addEventListener('ended', () => {
-                clickableVideo.style.opacity = "0.2";
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    currentIndex = (currentIndex - 1 + squares.length) % squares.length;
+                    updatePositions(true);
+                } else if (e.key === 'ArrowRight') {
+                    currentIndex = (currentIndex + 1) % squares.length;
+                    updatePositions(true);
+                } else if (e.key === ' ') {
+                    e.preventDefault();
+                    const currentSquare = squares[currentIndex];
+                    const video = currentSquare.querySelector('video');
+                    if (video) {
+                        if (video.paused) {
+                            video.muted = false;
+                            video.play();
+                            updatePlayIcon(currentSquare, true);
+                        } else {
+                            video.pause();
+                            video.muted = true;
+                            updatePlayIcon(currentSquare, false);
+                        }
+                    }
+                }
             });
 
-            audio.addEventListener('timeupdate', () => {
-                seekBar.value = (audio.currentTime / audio.duration) * 100;
+            // Mouse navigation
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                currentX = e.clientX;
             });
 
-            seekBar.addEventListener('input', () => {
-                const seekToTime = (seekBar.value / 100) * audio.duration;
-                audio.currentTime = seekToTime;
-                video.currentTime = seekToTime;
-                clickableVideo.currentTime = seekToTime;
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                currentX = e.clientX;
+                const diff = currentX - startX;
+
+                if (Math.abs(diff) > 100) {
+                    isDragging = false;
+                    if (diff > 0) {
+                        currentIndex = (currentIndex - 1 + squares.length) % squares.length;
+                    } else {
+                        currentIndex = (currentIndex + 1) % squares.length;
+                    }
+                    updatePositions(true);
+                }
             });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // Initial setup
+            updatePositions();
         });
     </script>
 </body>

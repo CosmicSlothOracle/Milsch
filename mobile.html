@@ -1,217 +1,691 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milch Experience - Mobile</title>
+    <title>Milch Experience Mobile</title>
     <style>
-        /* Reset styles */
         body,
         html {
             margin: 0;
             padding: 0;
             height: 100%;
+            background: #000;
+            font-family: Arial, sans-serif;
             overflow: hidden;
-            background-color: black;
+            perspective: 1000px;
         }
 
-        /* Container for the video player */
-        #playerContainer {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .carousel-container {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .video-square {
+            position: absolute;
+            width: calc(100vw * 0.8);
+            /* 80% of viewport width */
+            height: calc((100vw * 0.8) * 2);
+            /* Changed to 1:2 aspect ratio */
+            max-height: 90vh;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+            cursor: grab;
+        }
+
+        .video-container {
+            position: relative;
             width: 100%;
             height: 100%;
-            background-color: black;
+            border-radius: 20px;
+            border: 3px solid;
+            animation: gradientBorder 3s infinite;
             overflow: hidden;
+            transform-style: preserve-3d;
+            background: #000;
+            opacity: 1 !important;
         }
 
-        /* Main video element */
-        #video {
+        .video-element {
             position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            z-index: 1;
-            background: black;
         }
 
-        /* Overlay for play/pause interaction */
-        #frameOverlay {
+        .frame-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('https://i.postimg.cc/9MRsCJQ0/image.png') center center no-repeat;
-            background-size: cover;
             z-index: 2;
-            cursor: pointer;
+            pointer-events: none;
         }
 
-        /* Controls container */
-        #controls {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 20px;
+        .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 128px;
             z-index: 3;
-        }
-
-        /* Horizontal seek bar */
-        #seekBar {
-            width: 80%;
-            height: 15px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 7px;
-            outline: none;
-            cursor: pointer;
-        }
-
-        /* Custom styles for slider thumb */
-        #seekBar::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-        }
-
-        #seekBar::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-        }
-
-        /* Add fade-in and fade-out transitions for the clickable video */
-        .fade-in {
+            color: #ffffff;
             opacity: 1;
-            transition: opacity 0.8s ease-in-out;
+            /* Always fully visible by default */
+            pointer-events: none;
+            transition: opacity 0.2s ease-out;
         }
 
-        .fade-out {
+        .play-icon.hidden {
             opacity: 0;
-            transition: opacity 0.8s ease-in-out;
+        }
+
+        /* Updated card positions with shadows for depth */
+        .video-square:nth-child(1) {
+            transform: translateZ(0) translateY(0) translateX(0);
+            z-index: 4;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .video-square:nth-child(2) {
+            transform: translateZ(-100px) translateY(-20px) translateX(20px);
+            z-index: 3;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .video-square:nth-child(3) {
+            transform: translateZ(-200px) translateY(-40px) translateX(40px);
+            z-index: 2;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-square:nth-child(4) {
+            transform: translateZ(-300px) translateY(-60px) translateX(60px);
+            z-index: 1;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
+        }
+
+        .video-square.dragging {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .video-square.expanded {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.5) !important;
+            width: 95vw;
+            height: calc(95vw * 2);
+            z-index: 10;
+        }
+
+        @keyframes cardTransition {
+            0% {
+                transform: translateZ(0) translateY(0) translateX(0) scale(1);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+
+            50% {
+                transform: translateZ(-50px) translateY(-10px) translateX(10px) scale(0.95);
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            }
+
+            100% {
+                transform: translateZ(-300px) translateY(-60px) translateX(60px) scale(0.9);
+                box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        .seek-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #seekBar {
+            width: 100%;
+            height: 20px;
+        }
+
+        @keyframes gradientBorder {
+            0% {
+                border-image: linear-gradient(45deg, #ff69b4, #ffffff, #800080) 1;
+                border-image-slice: 1;
+            }
+
+            50% {
+                border-image: linear-gradient(225deg, #ff69b4, #ffffff, #800080) 1;
+                border-image-slice: 1;
+            }
+
+            100% {
+                border-image: linear-gradient(45deg, #ff69b4, #ffffff, #800080) 1;
+                border-image-slice: 1;
+            }
+        }
+
+        /* Updated flare effects */
+        .flare-large {
+            position: absolute;
+            width: 200%;
+            height: 150%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0.9),
+                    rgba(255, 255, 255, 0),
+                    transparent);
+            transform: translateX(-200%) skewX(-30deg);
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+        }
+
+        .flare-small {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0.7),
+                    rgba(255, 255, 255, 0),
+                    transparent);
+            transform: translateX(-200%) skewX(-45deg);
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+        }
+
+        @keyframes flareLarge {
+            0% {
+                transform: translateX(-200%) skewX(-30deg);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 0.9;
+            }
+
+            40% {
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateX(200%) skewX(-30deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes flareSmall {
+            0% {
+                transform: translateX(-200%) skewX(-45deg);
+                opacity: 0;
+            }
+
+            15% {
+                opacity: 0.7;
+            }
+
+            35% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateX(200%) skewX(-45deg);
+                opacity: 0;
+            }
+        }
+
+        /* Add flare animations to active card */
+        .video-square:nth-child(1) .flare-large {
+            animation: flareLarge 3.5s ease-in-out;
+        }
+
+        .video-square:nth-child(1) .flare-small {
+            animation: flareSmall 2.8s ease-in-out 0.3s;
+        }
+
+        @keyframes expandAnimation {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1.5);
+            }
+        }
+
+        @keyframes shrinkAnimation {
+            0% {
+                transform: scale(1.5);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Special scaling for top right square video */
+        .video-square:nth-child(2) .video-element {
+            width: 95%;
+            /* 5% reduction in width */
+            height: 90%;
+            /* 10% reduction in height */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
         }
     </style>
 </head>
 
 <body>
-    <div id="playerContainer">
-        <!-- Video player -->
-        <video id="video" muted playsinline>
-            <source
-                src="https://link.storjshare.io/s/jwosvpqrycu4sxgihvn65zld4xea/music/video-output-55ABDD3F-533B-4378-ABFF-A76FA4631505.mp4?download=1"
-                type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-
-        <!-- Frame overlay for interaction -->
-        <div id="frameOverlay"></div>
-
-        <!-- Controls with seek bar -->
-        <div id="controls">
-            <input id="seekBar" type="range" min="0" max="100" value="0">
+    <div class="carousel-container">
+        <!-- Top Left Square -->
+        <div class="video-square" data-color="#ff69b4">
+            <div class="video-container">
+                <div class="flare-large"></div>
+                <div class="flare-small"></div>
+                <div class="play-icon">▶</div>
+                <video class="video-element" playsinline>
+                    <source
+                        src="https://link.storjshare.io/s/judkq6l5jb23l4wvofr7jre55mbq/music/Video_top_left_square.mp4?download=1"
+                        type="video/mp4">
+                </video>
+                <img class="frame-overlay" src="https://i.postimg.cc/PxNpfxZk/top-left-square-frame.png" alt="Frame">
+            </div>
         </div>
+        <!-- Top Right Square -->
+        <div class="video-square" data-color="#800080">
+            <div class="video-container">
+                <div class="flare-large"></div>
+                <div class="flare-small"></div>
+                <div class="play-icon">▶</div>
+                <video class="video-element" playsinline>
+                    <source
+                        src="https://link.storjshare.io/s/jwkgpoicxz4xat5q3onesadv6e5a/music/Video_top_right_square.mp4?download=1"
+                        type="video/mp4">
+                </video>
+                <img class="frame-overlay"
+                    src="https://link.storjshare.io/s/jwyyaihcbzd6djw2urxxx64ck5eq/music/top_right_square_frame.png?download=1"
+                    alt="Frame">
+            </div>
+        </div>
+        <!-- Bottom Right Square - No Frame Overlay -->
+        <div class="video-square" data-color="#40E0D0">
+            <div class="video-container">
+                <div class="flare-large"></div>
+                <div class="flare-small"></div>
+                <div class="play-icon">▶</div>
+                <video class="video-element" playsinline>
+                    <source
+                        src="https://link.storjshare.io/s/jwa6btk3dccmz77ng57srx3knotq/music/bottom_right_video_nofame.mp4?download=1"
+                        type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </div>
 
-        <!-- Audio player -->
-        <audio id="audio">
-            <source src="https://link.storjshare.io/s/jvvuzllnvz7yqfsylqn5xeknupga/music/f.flac?download=1"
-                type="audio/flac">
-            Your browser does not support the audio tag.
-        </audio>
+    <div class="seek-controls">
+        <input type="range" id="seekBar" value="0" min="0" max="100">
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const video = document.getElementById('video');
-            const audio = document.getElementById('audio');
+            const container = document.querySelector('.carousel-container');
+            const squares = document.querySelectorAll('.video-square');
             const seekBar = document.getElementById('seekBar');
-            const frameOverlay = document.getElementById('frameOverlay');
+            let activeVideo = null;
+            let startX = 0;
+            let currentX = 0;
+            let isDragging = false;
+            let currentIndex = 0;
+            let dragDistance = 0;
+            const DRAG_THRESHOLD = 100;
+            let lastTap = 0;
+            let playIconTimeout;
+            let isExpanded = false;
 
-            // Define intro and loop segment times for the single video
-            const introDuration = 10; // seconds, for example
-            const loopStart = 10;     // begin loop after intro
-            const loopEnd = 60;      // loop end in seconds
+            function updatePositions(animate = false) {
+                squares.forEach((square, index) => {
+                    if (isExpanded && index === currentIndex) return;
 
-            // Fade logic: clicking the overlay snaps to full opacity; fade out on play
-            function applyFade(isPlaying) {
-                if (isPlaying) {
-                    frameOverlay.classList.remove('fade-in');
-                    frameOverlay.classList.add('fade-out');
-                } else {
-                    frameOverlay.classList.remove('fade-out');
-                    frameOverlay.classList.add('fade-in');
-                }
-            }
+                    const diff = (index - currentIndex + squares.length) % squares.length;
+                    if (animate) {
+                        square.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                        if (diff === 0) {
+                            handlePlayIconVisibility(square);
+                            // Trigger flare effects
+                            const flareLarge = square.querySelector('.flare-large');
+                            const flareSmall = square.querySelector('.flare-small');
 
-            // Override togglePlayPause to handle fade + video looping
-            function togglePlayPause() {
-                if (audio.paused) {
-                    audio.play();
-                    video.play();
-                    applyFade(true);
-                } else {
-                    audio.pause();
-                    video.pause();
-                    applyFade(false);
-                }
-            }
+                            flareLarge.style.animation = 'none';
+                            flareSmall.style.animation = 'none';
 
-            // Keep video looping properly after intro
-            video.addEventListener('timeupdate', () => {
-                // If we're past the intro, loop within the loop region
-                if (video.currentTime >= loopEnd) {
-                    video.currentTime = loopStart +
-                        (video.currentTime - loopEnd);
-                }
-            });
+                            void flareLarge.offsetWidth;
+                            void flareSmall.offsetWidth;
 
-            // Update seek bar as audio plays, sync video time with audio
-            audio.addEventListener('timeupdate', () => {
-                seekBar.value = (audio.currentTime / audio.duration) * 100;
-
-                // Determine if we are still in the intro or in the loop
-                if (audio.currentTime < introDuration) {
-                    video.currentTime = audio.currentTime;
-                } else {
-                    // map currentTime into the loop region
-                    const loopLength = loopEnd - loopStart;
-                    const elapsedAfterIntro = audio.currentTime - introDuration;
-                    video.currentTime = loopStart + (elapsedAfterIntro % loopLength);
-                }
-            });
-
-            // Seek within audio, move video to correct spot (intro or loop)
-            seekBar.addEventListener('input', () => {
-                if (!isNaN(audio.duration)) {
-                    const seekToTime = (seekBar.value / 100) * audio.duration;
-                    audio.currentTime = seekToTime;
-                    if (seekToTime < introDuration) {
-                        video.currentTime = seekToTime;
-                    } else {
-                        const loopLength = loopEnd - loopStart;
-                        const elapsedAfterIntro = seekToTime - introDuration;
-                        video.currentTime = loopStart + (elapsedAfterIntro % loopLength);
+                            flareLarge.style.animation = 'flareLarge 3.5s ease-in-out';
+                            flareSmall.style.animation = 'flareSmall 2.8s ease-in-out 0.3s';
+                        }
                     }
+                    square.style.transform = `
+                        translateZ(${ -100 * diff }px)
+                        translateY(${ -20 * diff }px)
+                        translateX(${ 20 * diff }px)
+                        scale(${ 1 - (diff * 0.05) })
+                    `;
+                    square.style.boxShadow = `0 ${ 10 + (diff * 5) }px ${ 30 + (diff * 5) }px rgba(0,0,0,${ 0.5 - (diff * 0.1) })`;
+                    square.style.zIndex = squares.length - diff;
+                });
+            }
+
+            function handleTouchStart(e) {
+                startX = e.touches[0].clientX;
+                isDragging = true;
+                container.style.cursor = 'grabbing';
+            }
+
+            function handleTouchMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                currentX = e.touches[0].clientX;
+                dragDistance = currentX - startX;
+
+                const activeSquare = squares[currentIndex];
+                activeSquare.classList.add('dragging');
+
+                const dragPercent = Math.abs(dragDistance) / DRAG_THRESHOLD;
+                activeSquare.style.transform = `
+                    translateX(${ dragDistance }px)
+                    scale(${ 1 + (dragPercent * 0.05) })
+                `;
+
+                if (Math.abs(dragDistance) > DRAG_THRESHOLD) {
+                    const direction = dragDistance > 0 ? -1 : 1;
+                    activeSquare.classList.remove('dragging');
+                    activeSquare.style.animation = 'cardTransition 0.5s forwards';
+
+                    setTimeout(() => {
+                        currentIndex = (currentIndex + direction + squares.length) % squares.length;
+                        updatePositions(true);
+                        activeSquare.style.animation = '';
+                    }, 50);
+
+                    isDragging = false;
+                    dragDistance = 0;
+                }
+            }
+
+            function handleTouchEnd() {
+                if (isDragging) {
+                    const activeSquare = squares[currentIndex];
+                    activeSquare.classList.remove('dragging');
+                    activeSquare.style.transform = '';
+                    isDragging = false;
+                    dragDistance = 0;
+                    updatePositions(true);
+                }
+            }
+
+            container.addEventListener('touchstart', handleTouchStart);
+            container.addEventListener('touchmove', handleTouchMove);
+            container.addEventListener('touchend', handleTouchEnd);
+
+            function updatePlayIcon(square, isPlaying) {
+                const playIcon = square.querySelector('.play-icon');
+                if (!playIcon) return;
+
+                clearTimeout(playIconTimeout); // Clear any existing timeouts
+
+                if (isPlaying) {
+                    playIcon.classList.add('hidden');
+                } else {
+                    playIcon.classList.remove('hidden');
+                }
+            }
+
+            function handleVideoSeek(video, seekBar) {
+                if (!video || !seekBar) return;
+
+                // Update seek bar as video plays
+                video.addEventListener('timeupdate', () => {
+                    if (!video.paused && !seekBar.dragging) {
+                        const progress = (video.currentTime / video.duration) * 100;
+                        seekBar.value = isNaN(progress) ? 0 : progress;
+                    }
+                });
+
+                // Handle buffering
+                video.addEventListener('progress', () => {
+                    if (video.buffered.length > 0) {
+                        const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                        const duration = video.duration;
+                        const bufferedProgress = (bufferedEnd / duration) * 100;
+                        // Update buffering UI if needed
+                    }
+                });
+
+                // Handle seeking with debounce
+                let seekTimeout;
+                seekBar.addEventListener('input', () => {
+                    seekBar.dragging = true;
+                    clearTimeout(seekTimeout);
+
+                    seekTimeout = setTimeout(() => {
+                        try {
+                            const time = (seekBar.value / 100) * video.duration;
+                            if (!isNaN(time) && isFinite(time)) {
+                                video.currentTime = time;
+                            }
+                        } catch (error) {
+                            console.error('Seeking error:', error);
+                        }
+                    }, 100); // Debounce seek operations
+                });
+
+                // Handle seek end
+                seekBar.addEventListener('change', () => {
+                    seekBar.dragging = false;
+                });
+
+                // Handle loading metadata
+                video.addEventListener('loadedmetadata', () => {
+                    seekBar.max = 100;
+                    seekBar.value = 0;
+                });
+
+                // Handle errors
+                video.addEventListener('error', (e) => {
+                    console.error('Video error:', e);
+                    // Implement retry logic if needed
+                });
+            }
+
+            squares.forEach((square, index) => {
+                const video = square.querySelector('video');
+                const seekBar = document.querySelector('#seekBar');
+
+                if (!video || !seekBar) return;
+
+                try {
+                    // Optimize video loading
+                    video.preload = "metadata"; // Only load metadata initially
+
+                    // Set up video properties
+                    video.addEventListener('loadedmetadata', () => {
+                        // Enable seeking only after metadata is loaded
+                        seekBar.disabled = false;
+                    });
+
+                    // Initialize seek functionality
+                    handleVideoSeek(video, seekBar);
+
+                    // Handle video click/tap
+                    square.addEventListener('click', (event) => {
+                        if (index === currentIndex) {
+                            if (video.paused) {
+                                // Stop other videos
+                                squares.forEach(s => {
+                                    const v = s.querySelector('video');
+                                    if (v && v !== video) {
+                                        v.pause();
+                                        v.currentTime = 0;
+                                        v.muted = true;
+                                        updatePlayIcon(s, false);
+                                    }
+                                });
+
+                                // Play this video
+                                video.muted = false;
+                                video.play()
+                                    .then(() => {
+                                        updatePlayIcon(square, true);
+                                        // Enable seek bar for active video
+                                        seekBar.disabled = false;
+                                    })
+                                    .catch(error => {
+                                        console.error('Error playing video:', error);
+                                        updatePlayIcon(square, false);
+                                    });
+                            } else {
+                                video.pause();
+                                video.muted = true;
+                                updatePlayIcon(square, false);
+                            }
+
+                            handleDoubleTap(square, event);
+                        }
+                    });
+
+                } catch (error) {
+                    console.error('Error setting up video:', error);
                 }
             });
 
-            // Play/pause when tapping the overlay
-            frameOverlay.addEventListener('click', togglePlayPause);
+            function handlePlayIconVisibility(square) {
+                const playIcon = square.querySelector('.play-icon');
+                clearTimeout(playIconTimeout);
+
+                playIcon.classList.remove('hidden');
+                playIconTimeout = setTimeout(() => {
+                    playIcon.classList.add('hidden');
+                }, 3000);
+            }
+
+            function handleDoubleTap(square, event) {
+                const now = Date.now();
+                const DOUBLE_TAP_DELAY = 300;
+
+                if (now - lastTap < DOUBLE_TAP_DELAY) {
+                    if (!isExpanded) {
+                        square.classList.add('expanded');
+                        square.style.animation = 'expandAnimation 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                    } else {
+                        square.classList.remove('expanded');
+                        square.style.animation = 'shrinkAnimation 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                    }
+                    isExpanded = !isExpanded;
+                    event.preventDefault(); // Prevent zoom
+                }
+                lastTap = now;
+            }
+
+            function stopCurrentVideo() {
+                const currentSquare = squares[currentIndex];
+                if (!currentSquare) return;
+
+                const video = currentSquare.querySelector('video');
+                if (!video) return;
+
+                try {
+                    video.pause();
+                    video.currentTime = 0;
+                    video.muted = true;
+                    updatePlayIcon(currentSquare, false); // Show play icon when video stops
+                } catch (error) {
+                    console.error('Error stopping video:', error);
+                }
+            }
+
+            // Prevent default touch actions when expanded
+            squares.forEach((square, index) => {
+                square.addEventListener('touchmove', (e) => {
+                    if (isExpanded) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                // Handle swipe to next card
+                let touchStartX = 0;
+                square.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                });
+
+                square.addEventListener('touchend', (e) => {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const swipeDistance = touchEndX - touchStartX;
+
+                    if (Math.abs(swipeDistance) > DRAG_THRESHOLD && isExpanded) {
+                        isExpanded = false;
+                        square.classList.remove('expanded');
+                        square.style.animation = 'shrinkAnimation 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+
+                        // Immediately stop current video
+                        stopCurrentVideo();
+
+                        // Then update positions
+                        setTimeout(() => {
+                            currentIndex = swipeDistance > 0 ?
+                                (currentIndex - 1 + squares.length) % squares.length :
+                                (currentIndex + 1) % squares.length;
+                            updatePositions(true);
+                        }, 300);
+                    }
+                });
+
+                // Also handle video stop on regular swipe (when not expanded)
+                square.addEventListener('touchmove', (e) => {
+                    if (isExpanded) {
+                        e.preventDefault();
+                    } else {
+                        const touch = e.touches[0];
+                        const swipeDistance = touch.clientX - touchStartX;
+
+                        if (Math.abs(swipeDistance) > DRAG_THRESHOLD) {
+                            stopCurrentVideo();
+                        }
+                    }
+                }, { passive: false });
+            });
+
+            // Initial position setup
+            updatePositions();
         });
     </script>
 </body>
